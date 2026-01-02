@@ -15,14 +15,12 @@
 </head>
 <body class="bg-[#f8fafc] p-8 font-sans">
     <div class="max-w-7xl mx-auto flex gap-8">
-        
         <div class="w-80 shrink-0 space-y-6">
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                 <div class="flex items-center gap-2 mb-6 text-blue-600">
                     <span class="text-xl">⚙️</span>
                     <h2 class="font-bold text-gray-800 text-lg">NVR Configuration</h2>
                 </div>
-                
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm text-gray-500 mb-2">NVR Model</label>
@@ -34,7 +32,6 @@
                             <option value="400,4">DR-2504 (400 TP)</option>
                         </select>
                     </div>
-                    
                     <div class="grid grid-cols-1 gap-3 pt-2 text-sm">
                         <div class="flex justify-between text-gray-400"><span>Max Throughput</span><span id="maxTP" class="font-bold text-gray-700">3200</span></div>
                         <div class="flex justify-between text-gray-400"><span>Available VA Engines</span><span id="maxUnits" class="font-bold text-blue-600">32 Units</span></div>
@@ -43,39 +40,27 @@
             </div>
 
             <div id="statusPanel" class="bg-[#262f3f] p-6 rounded-2xl shadow-xl text-white transition-colors duration-300">
-                <div class="flex items-center gap-2 mb-6">
-                    <span id="statusIcon">✔️</span>
-                    <h2 class="font-bold text-sm uppercase tracking-wider">System Load Analysis</h2>
-                </div>
-                
+                <div class="flex items-center gap-2 mb-6 text-sm uppercase tracking-wider font-bold"><span id="statusIcon">✔️</span> System Load Analysis</div>
                 <div class="flex justify-between items-end mb-2">
                     <span class="text-3xl font-bold"><span id="usagePercent">0</span>%</span>
                     <span class="text-xs opacity-70"><span id="currentTP">0</span> / <span id="targetTP">3200</span></span>
                 </div>
-                
                 <div class="w-full bg-black/20 h-2.5 rounded-full overflow-hidden mb-8">
                     <div id="tpBar" class="progress-bar bg-[#4ade80] h-full w-0"></div>
                 </div>
-                
                 <div class="space-y-4 text-sm border-t border-white/10 pt-6">
                     <div class="flex justify-between opacity-80"><span>Connected Cameras</span><span id="camCount" class="font-bold">0</span></div>
                     <div class="flex justify-between opacity-80"><span>Required VA Engines</span><span id="engineCount" class="font-bold">0 / 32</span></div>
                 </div>
-                
-                <div id="statusMsg" class="mt-8 text-center text-[11px] font-bold py-2 rounded-lg bg-white/10 text-green-400 border border-green-500/20">
-                    ✓ System is operational.
-                </div>
+                <div id="statusMsg" class="mt-8 text-center text-[11px] font-bold py-2 rounded-lg bg-white/10 text-green-400 border border-green-500/20">✓ System is operational.</div>
             </div>
 
             <div class="bg-[#f1f5f9] p-6 rounded-2xl border border-blue-100 text-blue-800">
-                <div class="flex items-center gap-2 mb-4">
-                    <span class="text-sm">ⓘ</span>
-                    <h3 class="font-bold text-sm">Notes</h3>
-                </div>
+                <div class="flex items-center gap-2 mb-4 font-bold text-sm">ⓘ Notes</div>
                 <ul class="text-[11px] leading-relaxed space-y-2 list-disc ml-3">
                     <li>1 VA Engine = 100 Throughput</li>
-                    <li>Each analytic feature (Object, Face, etc.) consumes 1 VA engine unit.</li>
-                    <li>Combined features consume multiple engine units accordingly.</li>
+                    <li>Metadata is required for Attributes, but costs 0 TP.</li>
+                    <li>Attributes cost 100 TP.</li>
                     <li>NVR throughput may vary by firmware. Maintaining a resource buffer is recommended.</li>
                 </ul>
             </div>
@@ -86,9 +71,7 @@
                 <h2 class="text-2xl font-bold text-gray-800 tracking-tight">Camera Configuration <span id="camTotalText" class="text-blue-600 ml-1">(0)</span></h2>
                 <button onclick="addCamera()" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition-all">+ Add Camera</button>
             </div>
-            
-            <div id="cameraGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                </div>
+            <div id="cameraGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
         </div>
     </div>
 
@@ -108,8 +91,8 @@
             if (cameras.length >= 64) return;
             cameras.push({
                 id: Date.now(),
-                obj: { on: false, at: false, me: false },
-                face: { on: false, at: false, me: false },
+                obj: { on: false, me: false, at: false },
+                face: { on: false, me: false, at: false },
                 aba: false, fall: false, crowd: false, dv1304: false
             });
             render();
@@ -122,11 +105,14 @@
 
         function toggle(camId, type, sub = null) {
             const cam = cameras.find(c => c.id === camId);
-            if (sub) {
-                if (cam[type].on) cam[type][sub] = !cam[type][sub];
+            if (sub === 'me') {
+                if (cam[type].on) cam[type].me = !cam[type].me;
+                if (!cam[type].me) cam[type].at = false;
+            } else if (sub === 'at') {
+                if (cam[type].me) cam[type].at = !cam[type].at;
             } else if (typeof cam[type] === 'object') {
                 cam[type].on = !cam[type].on;
-                if (!cam[type].on) { cam[type].at = false; cam[type].me = false; }
+                if (!cam[type].on) { cam[type].me = false; cam[type].at = false; }
             } else {
                 cam[type] = !cam[type];
             }
@@ -140,8 +126,8 @@
 
             cameras.forEach((cam, idx) => {
                 let cTP = 0, cU = 0;
-                if (cam.obj.on) { cTP += 100; cU++; if(cam.obj.at) cTP += 100; if(cam.obj.me) cTP += 100; }
-                if (cam.face.on) { cTP += 100; cU++; if(cam.face.at) cTP += 100; if(cam.face.me) cTP += 100; }
+                if (cam.obj.on) { cTP += 100; cU++; if(cam.obj.at) cTP += 100; }
+                if (cam.face.on) { cTP += 100; cU++; if(cam.face.at) cTP += 100; }
                 if (cam.aba) { cTP += 100; cU++; }
                 if (cam.fall) { cTP += 100; cU++; }
                 if (cam.crowd) { cTP += 100; cU++; }
@@ -150,10 +136,10 @@
 
                 grid.innerHTML += `
                     <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative">
-                        <div class="flex justify-between items-center mb-6 pb-2 border-b border-gray-50">
-                            <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wider">Camera ${idx + 1}</h3>
+                        <div class="flex justify-between items-center mb-6 pb-2 border-b border-gray-50 uppercase text-xs font-bold text-gray-400">
+                            <span>Camera ${idx + 1}</span>
                             <div class="flex items-center gap-2">
-                                <span class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">${cTP} VA</span>
+                                <span class="text-blue-600 bg-blue-50 px-3 py-1 rounded-full">${cTP} VA</span>
                                 <button onclick="removeCamera(${cam.id})" class="text-gray-300 hover:text-red-500 ml-2">✕</button>
                             </div>
                         </div>
@@ -177,23 +163,25 @@
                     <label class="flex items-center gap-3 text-sm font-semibold cursor-pointer">
                         <input type="checkbox" ${state.on ? 'checked' : ''} onchange="toggle(${id}, '${key}')" class="w-4 h-4 rounded border-gray-300 text-blue-600"> ${label}
                     </label>
-                    <div class="ml-7 mt-2 flex gap-4 text-[11px] ${!state.on ? 'opacity-20 pointer-events-none' : ''}">
-                        <label class="flex items-center gap-1.5 cursor-pointer text-gray-500"><input type="checkbox" ${state.at ? 'checked' : ''} onchange="toggle(${id}, '${key}', 'at')"> Attribute</label>
-                        <label class="flex items-center gap-1.5 cursor-pointer text-gray-500"><input type="checkbox" ${state.me ? 'checked' : ''} onchange="toggle(${id}, '${key}', 'me')"> Metadata</label>
+                    <div class="ml-7 mt-2 space-y-2 text-[11px] ${!state.on ? 'opacity-20 pointer-events-none' : ''}">
+                        <label class="flex items-center gap-1.5 cursor-pointer text-gray-500">
+                            <input type="checkbox" ${state.me ? 'checked' : ''} onchange="toggle(${id}, '${key}', 'me')"> Metadata (0 TP)
+                        </label>
+                        <div class="ml-4 ${!state.me ? 'opacity-20 pointer-events-none' : ''}">
+                            <label class="flex items-center gap-1.5 cursor-pointer text-gray-500">
+                                <input type="checkbox" ${state.at ? 'checked' : ''} onchange="toggle(${id}, '${key}', 'at')"> └ Attribute (100 TP)
+                            </label>
+                        </div>
                     </div>
                 </div>
             `;
         }
 
         function renderSimpleEngineRow(id, key, label, isActive, isSpecial = false) {
-            const activeClass = isSpecial ? 'dv-active' : 'engine-active';
-            const textColor = isSpecial ? 'text-orange-600' : 'text-gray-700';
-            const checkColor = isSpecial ? 'text-orange-500' : 'text-blue-600';
-
             return `
-                <div class="p-3 rounded-2xl engine-card ${isActive ? activeClass : ''}">
-                    <label class="flex items-center gap-3 text-sm font-semibold cursor-pointer ${textColor}">
-                        <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggle(${id}, '${key}')" class="w-4 h-4 rounded border-gray-300 ${checkColor}"> ${label}
+                <div class="p-3 rounded-2xl engine-card ${isActive ? (isSpecial ? 'dv-active' : 'engine-active') : ''}">
+                    <label class="flex items-center gap-3 text-sm font-semibold cursor-pointer ${isSpecial ? 'text-orange-600' : ''}">
+                        <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggle(${id}, '${key}')" class="w-4 h-4 rounded border-gray-300 ${isSpecial ? 'text-orange-500' : 'text-blue-600'}"> ${label}
                     </label>
                 </div>
             `;
@@ -202,32 +190,24 @@
         function updateDashboard(load, units) {
             const percent = Math.round((load / maxTP) * 100);
             const isOver = load > maxTP || units > maxUnits;
-            
             document.getElementById('usagePercent').innerText = percent;
             document.getElementById('currentTP').innerText = load;
             document.getElementById('camCount').innerText = cameras.length;
             document.getElementById('camTotalText').innerText = `(${cameras.length})`;
             document.getElementById('engineCount').innerText = units + " / " + maxUnits;
-            
-            const bar = document.getElementById('tpBar');
-            bar.style.width = Math.min(percent, 100) + "%";
-            
+            document.getElementById('tpBar').style.width = Math.min(percent, 100) + "%";
             const panel = document.getElementById('statusPanel');
             const msg = document.getElementById('statusMsg');
-            const icon = document.getElementById('statusIcon');
-
             if (isOver) {
                 panel.classList.add('bg-overload');
-                bar.classList.replace('bg-[#4ade80]', 'bg-white');
                 msg.innerText = "⚠ PERFORMANCE EXCEEDED! REDUCE LOAD.";
                 msg.className = "mt-8 text-center text-[10px] font-bold py-2 rounded-lg bg-black/20 text-white border border-white/30";
-                icon.innerText = "⚠️";
+                document.getElementById('statusIcon').innerText = "⚠️";
             } else {
                 panel.classList.remove('bg-overload');
-                bar.classList.replace('bg-white', 'bg-[#4ade80]');
                 msg.innerText = "✓ System is operational.";
                 msg.className = "mt-8 text-center text-[11px] font-bold py-2 rounded-lg bg-white/10 text-green-400 border border-green-500/20";
-                icon.innerText = "✔️";
+                document.getElementById('statusIcon').innerText = "✔️";
             }
         }
         initNVR();
