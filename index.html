@@ -6,152 +6,170 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .progress-bar { transition: width 0.3s ease; }
+        .engine-card { border-left: 4px solid #e2e8f0; transition: all 0.2s; }
+        .engine-active { border-left-color: #3b82f6; background-color: #eff6ff; }
     </style>
 </head>
-<body class="bg-gray-100 p-8">
-    <div class="max-w-6xl mx-auto flex gap-8">
-        <div class="w-1/3 space-y-6">
-            <div class="bg-white p-6 rounded-xl shadow-md">
-                <h2 class="text-xl font-bold mb-4 text-blue-600">⚙️ NVR 구성 설정</h2>
-                <label class="block mb-2 font-medium">NVR 모델명</label>
-                <select id="modelSelect" class="w-full p-2 border rounded mb-4" onchange="initNVR()">
+<body class="bg-gray-50 p-8">
+    <div class="max-w-7xl mx-auto flex gap-8">
+        <div class="w-80 shrink-0 space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <h2 class="text-lg font-bold mb-4 text-gray-800">NVR 모델 선택</h2>
+                <select id="modelSelect" class="w-full p-2.5 border rounded-lg text-sm mb-4" onchange="initNVR()">
                     <option value="3200,32">DR-8564 / 8564D (3200 TP)</option>
-                    <option value="1600,16">DR-8532 / 8516 / 6500 (1600 TP)</option>
+                    <option value="1600,16">DR-8532 / 8516 (1600 TP)</option>
+                    <option value="1600,16">DR-6532 / 6516 / 6508 (1600 TP)</option>
                     <option value="800,8">DR-2516 / 2508 (800 TP)</option>
                     <option value="400,4">DR-2504 (400 TP)</option>
                 </select>
-                <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                    <div>Max Throughput: <span id="maxTP" class="font-bold">3200</span></div>
-                    <div>가용 VA Engines: <span id="maxUnits" class="font-bold">32 Units</span></div>
+                <div class="space-y-2 text-xs text-gray-500">
+                    <div class="flex justify-between"><span>Max Throughput</span><span id="maxTP">3200</span></div>
+                    <div class="flex justify-between"><span>가용 VA Engines</span><span id="maxUnits">32 Units</span></div>
                 </div>
             </div>
 
-            <div class="bg-slate-800 p-6 rounded-xl shadow-md text-white">
-                <h2 class="text-lg font-bold mb-4">📊 시스템 부하 분석</h2>
-                <div class="mb-2 flex justify-between text-sm">
-                    <span>사용량 (<span id="usagePercent">0</span>%)</span>
-                    <span><span id="currentTP">0</span> / <span id="targetTP">3200</span></span>
+            <div class="bg-[#1e293b] p-6 rounded-2xl shadow-xl text-white">
+                <h2 class="text-sm font-bold mb-6 text-gray-400 uppercase tracking-wider">시스템 부하 분석</h2>
+                <div class="flex justify-between items-end mb-2">
+                    <span class="text-3xl font-bold"><span id="usagePercent">0</span>%</span>
+                    <span class="text-xs text-gray-400"><span id="currentTP">0</span> / <span id="targetTP">3200</span></span>
                 </div>
-                <div class="w-full bg-gray-700 h-4 rounded-full overflow-hidden mb-4">
-                    <div id="tpBar" class="progress-bar bg-green-500 h-full" style="width: 0%"></div>
+                <div class="w-full bg-gray-700 h-2 rounded-full overflow-hidden mb-6">
+                    <div id="tpBar" class="progress-bar bg-green-400 h-full w-0"></div>
                 </div>
-                <div class="text-sm space-y-1">
+                <div class="space-y-3 text-sm border-t border-gray-700 pt-4">
                     <div class="flex justify-between"><span>연결된 카메라</span><span id="camCount">0 대</span></div>
-                    <div class="flex justify-between"><span>필요한 VA Engines</span><span id="engineCount">0 / 32</span></div>
+                    <div class="flex justify-between"><span>사용 중인 엔진</span><span id="engineCount">0 / 32</span></div>
                 </div>
-                <div id="statusMsg" class="mt-4 text-green-400 font-bold text-sm">✓ 현재 설정으로 운용 가능합니다.</div>
+                <div id="statusMsg" class="mt-6 p-2 rounded text-center text-xs font-bold border border-green-500/30 text-green-400 bg-green-500/10">
+                    ✓ 현재 설정으로 운용 가능합니다.
+                </div>
             </div>
         </div>
 
-        <div class="w-2/3">
+        <div class="flex-1">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">📷 카메라 구성</h2>
-                <button onclick="addCamera()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">+ 카메라 추가</button>
+                <h2 class="text-2xl font-bold text-gray-800">카메라 구성 <span id="camTotalText" class="text-blue-600">(0대)</span></h2>
+                <button onclick="addCamera()" class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition-all">+ 카메라 추가</button>
             </div>
-            <div id="cameraGrid" class="grid grid-cols-2 gap-4">
+            <div id="cameraGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 </div>
         </div>
     </div>
 
     <script>
-        let maxTP = 3200;
-        let maxUnits = 32;
-        let cameras = [];
+        let maxTP = 3200, maxUnits = 32, cameras = [];
 
         function initNVR() {
-            const val = document.getElementById('modelSelect').value.split(',');
-            maxTP = parseInt(val[0]);
-            maxUnits = parseInt(val[1]);
-            document.getElementById('maxTP').innerText = maxTP;
-            document.getElementById('maxUnits').innerText = maxUnits + " Units";
-            document.getElementById('targetTP').innerText = maxTP;
-            updateDashboard();
+            const [tp, unit] = document.getElementById('modelSelect').value.split(',').map(Number);
+            maxTP = tp; maxUnits = unit;
+            document.getElementById('maxTP').innerText = tp;
+            document.getElementById('maxUnits').innerText = unit + " Units";
+            document.getElementById('targetTP').innerText = tp;
+            render();
         }
 
         function addCamera() {
-            if (cameras.length >= maxUnits) {
-                alert("가용 VA 엔진 수를 초과할 수 없습니다.");
-                return;
-            }
-            const cam = { id: Date.now(), obj: false, objAt: false, objMe: false, face: false, faceAt: false, faceMe: false, other: 0 };
-            cameras.push(cam);
-            renderCameras();
+            if (cameras.length >= 64) return;
+            cameras.push({
+                id: Date.now(),
+                obj: { on: false, at: false, me: false },
+                face: { on: false, at: false, me: false },
+                aba: false, fall: false, crowd: false, dv1304: false
+            });
+            render();
         }
 
         function removeCamera(id) {
             cameras = cameras.filter(c => c.id !== id);
-            renderCameras();
+            render();
         }
 
-        function toggleOption(id, opt) {
-            const cam = cameras.find(c => c.id === id);
-            if (opt === 'obj') cam.obj = !cam.obj;
-            if (opt === 'objAt' && cam.obj) cam.objAt = !cam.objAt;
-            if (opt === 'objMe' && cam.obj) cam.objMe = !cam.objMe;
-            if (opt === 'face') cam.face = !cam.face;
-            if (opt === 'faceAt' && cam.face) cam.faceAt = !cam.faceAt;
-            if (opt === 'faceMe' && cam.face) cam.faceMe = !cam.faceMe;
-            renderCameras();
+        function toggle(camId, type, sub = null) {
+            const cam = cameras.find(c => c.id === camId);
+            if (sub) {
+                if (cam[type].on) cam[type][sub] = !cam[type][sub];
+            } else if (typeof cam[type] === 'object') {
+                cam[type].on = !cam[type].on;
+                if (!cam[type].on) { cam[type].at = false; cam[type].me = false; }
+            } else {
+                cam[type] = !cam[type];
+            }
+            render();
         }
 
-        function renderCameras() {
+        function render() {
             const grid = document.getElementById('cameraGrid');
             grid.innerHTML = '';
-            let totalLoad = 0;
+            let totalTP = 0, totalUnits = 0;
 
-            cameras.forEach((cam, index) => {
-                let camLoad = 0;
-                if (cam.obj) camLoad += 100;
-                if (cam.objAt && cam.obj) camLoad += 100;
-                if (cam.objMe && cam.obj) camLoad += 100;
-                if (cam.face) camLoad += 100;
-                if (cam.faceAt && cam.face) camLoad += 100;
-                if (cam.faceMe && cam.face) camLoad += 100;
-                totalLoad += camLoad;
+            cameras.forEach((cam, idx) => {
+                let cTP = 0, cU = 0;
+                if (cam.obj.on) { cTP += 100; cU++; if(cam.obj.at) cTP += 100; if(cam.obj.me) cTP += 100; }
+                if (cam.face.on) { cTP += 100; cU++; if(cam.face.at) cTP += 100; if(cam.face.me) cTP += 100; }
+                if (cam.aba) { cTP += 100; cU++; }
+                if (cam.fall) { cTP += 100; cU++; }
+                if (cam.crowd) { cTP += 100; cU++; }
+                if (cam.dv1304) { cTP += 100; cU++; } // DV-1304 엔진 추가
+
+                totalTP += cTP; totalUnits += cU;
 
                 grid.innerHTML += `
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 relative">
-                        <button onclick="removeCamera(${cam.id})" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xl">×</button>
-                        <h3 class="font-bold text-gray-700 mb-3">Camera ${index + 1}</h3>
-                        <div class="space-y-2 text-sm">
-                            <label class="flex items-center gap-2"><input type="checkbox" ${cam.obj ? 'checked' : ''} onchange="toggleOption(${cam.id}, 'obj')"> Object Engine (100)</label>
-                            <div class="ml-6 space-y-1 ${!cam.obj ? 'opacity-30 pointer-events-none' : ''}">
-                                <label class="flex items-center gap-2 text-gray-500"><input type="checkbox" ${cam.objAt ? 'checked' : ''} onchange="toggleOption(${cam.id}, 'objAt')"> └ Attribute (100)</label>
-                                <label class="flex items-center gap-2 text-gray-500"><input type="checkbox" ${cam.objMe ? 'checked' : ''} onchange="toggleOption(${cam.id}, 'objMe')"> └ Metadata (100)</label>
-                            </div>
-                            <label class="flex items-center gap-2 mt-2"><input type="checkbox" ${cam.face ? 'checked' : ''} onchange="toggleOption(${cam.id}, 'face')"> Face Engine (100)</label>
-                            <div class="ml-6 space-y-1 ${!cam.face ? 'opacity-30 pointer-events-none' : ''}">
-                                <label class="flex items-center gap-2 text-gray-500"><input type="checkbox" ${cam.faceAt ? 'checked' : ''} onchange="toggleOption(${cam.id}, 'faceAt')"> └ Attribute (100)</label>
-                                <label class="flex items-center gap-2 text-gray-500"><input type="checkbox" ${cam.faceMe ? 'checked' : ''} onchange="toggleOption(${cam.id}, 'faceMe')"> └ Metadata (100)</label>
+                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm relative">
+                        <div class="flex justify-between items-center mb-4 pb-2 border-b">
+                            <h3 class="font-bold text-gray-700">Camera ${idx + 1}</h3>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">${cTP} VA</span>
+                                <button onclick="removeCamera(${cam.id})" class="text-gray-300 hover:text-red-500">✕</button>
                             </div>
                         </div>
-                        <div class="mt-4 pt-3 border-t text-right font-bold text-blue-600">${camLoad} VA</div>
+                        <div class="space-y-3">
+                            <div class="p-2 rounded-lg engine-card ${cam.obj.on ? 'engine-active' : ''}">
+                                <label class="flex items-center gap-2 text-sm font-semibold cursor-pointer"><input type="checkbox" ${cam.obj.on ? 'checked' : ''} onchange="toggle(${cam.id}, 'obj')"> Object Engine</label>
+                                <div class="ml-6 mt-1 flex gap-3 text-[11px] ${!cam.obj.on ? 'opacity-20 pointer-events-none' : ''}">
+                                    <label class="cursor-pointer"><input type="checkbox" ${cam.obj.at ? 'checked' : ''} onchange="toggle(${cam.id}, 'obj', 'at')"> Attribute</label>
+                                    <label class="cursor-pointer"><input type="checkbox" ${cam.obj.me ? 'checked' : ''} onchange="toggle(${cam.id}, 'obj', 'me')"> Metadata</label>
+                                </div>
+                            </div>
+                            <div class="p-2 rounded-lg engine-card ${cam.face.on ? 'engine-active' : ''}">
+                                <label class="flex items-center gap-2 text-sm font-semibold cursor-pointer"><input type="checkbox" ${cam.face.on ? 'checked' : ''} onchange="toggle(${cam.id}, 'face')"> Face Engine</label>
+                                <div class="ml-6 mt-1 flex gap-3 text-[11px] ${!cam.face.on ? 'opacity-20 pointer-events-none' : ''}">
+                                    <label class="cursor-pointer"><input type="checkbox" ${cam.face.at ? 'checked' : ''} onchange="toggle(${cam.id}, 'face', 'at')"> Attribute</label>
+                                    <label class="cursor-pointer"><input type="checkbox" ${cam.face.me ? 'checked' : ''} onchange="toggle(${cam.id}, 'face', 'me')"> Metadata</label>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-[11px] font-bold">
+                                <div onclick="toggle(${cam.id}, 'aba')" class="p-2 border rounded-lg text-center cursor-pointer ${cam.aba ? 'bg-blue-600 text-white' : 'text-gray-400'}">Abandoned</div>
+                                <div onclick="toggle(${cam.id}, 'fall')" class="p-2 border rounded-lg text-center cursor-pointer ${cam.fall ? 'bg-blue-600 text-white' : 'text-gray-400'}">Fall Detection</div>
+                                <div onclick="toggle(${cam.id}, 'crowd')" class="p-2 border rounded-lg text-center cursor-pointer ${cam.crowd ? 'bg-blue-600 text-white' : 'text-gray-400'}">Crowd Detection</div>
+                                <div onclick="toggle(${cam.id}, 'dv1304')" class="p-2 border rounded-lg text-center cursor-pointer ${cam.dv1304 ? 'bg-orange-500 text-white border-orange-500' : 'text-orange-500 border-orange-200'}">DV-1304 (AI Box)</div>
+                            </div>
+                        </div>
                     </div>
                 `;
             });
-            updateDashboard(totalLoad);
+            update(totalTP, totalUnits);
         }
 
-        function updateDashboard(load = 0) {
-            const percent = Math.min((load / maxTP) * 100, 100);
+        function update(load, units) {
+            const p = Math.min((load / maxTP) * 100, 100);
+            document.getElementById('usagePercent').innerText = Math.round(p);
             document.getElementById('currentTP').innerText = load;
-            document.getElementById('usagePercent').innerText = Math.round(percent);
             document.getElementById('camCount').innerText = cameras.length + " 대";
-            document.getElementById('engineCount').innerText = cameras.length + " / " + maxUnits;
-            
-            const bar = document.getElementById('tpBar');
-            bar.style.width = percent + "%";
-            bar.className = `progress-bar h-full ${percent > 90 ? 'bg-red-500' : 'bg-green-500'}`;
-            
+            document.getElementById('camTotalText').innerText = `(${cameras.length}대)`;
+            document.getElementById('engineCount').innerText = units + " / " + maxUnits;
+            document.getElementById('tpBar').style.width = p + "%";
+            document.getElementById('tpBar').className = `progress-bar h-full ${p > 90 ? 'bg-red-500' : 'bg-green-400'}`;
             const msg = document.getElementById('statusMsg');
-            if (load > maxTP) {
-                msg.innerText = "✘ 부하 초과! 설계 변경이 필요합니다.";
-                msg.className = "mt-4 text-red-500 font-bold text-sm";
+            if (load > maxTP || units > maxUnits) {
+                msg.innerText = "✘ 부하 초과: 설계 변경 필요";
+                msg.className = "mt-6 p-2 rounded text-center text-xs font-bold border border-red-500/30 text-red-400 bg-red-500/10";
             } else {
                 msg.innerText = "✓ 현재 설정으로 운용 가능합니다.";
-                msg.className = "mt-4 text-green-400 font-bold text-sm";
+                msg.className = "mt-6 p-2 rounded text-center text-xs font-bold border border-green-500/30 text-green-400 bg-green-500/10";
             }
         }
+        initNVR();
     </script>
 </body>
 </html>
