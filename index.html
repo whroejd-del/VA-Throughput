@@ -1,57 +1,90 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NVR VA Throughput 시뮬레이터</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NVR VA Throughput Calculator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .progress-bar { transition: width 0.3s ease; }
-        .engine-card { border-left: 4px solid #e2e8f0; transition: all 0.2s; }
+        .progress-bar { transition: width 0.3s ease, background-color 0.3s ease; }
+        .engine-card { border-left: 4px solid #f1f5f9; transition: all 0.2s; }
         .engine-active { border-left-color: #3b82f6; background-color: #eff6ff; }
+        .dv-active { border-left-color: #f97316; background-color: #fff7ed; }
+        .bg-overload { background-color: #dc2626 !important; }
     </style>
 </head>
-<body class="bg-gray-50 p-8">
+<body class="bg-[#f8fafc] p-8 font-sans">
     <div class="max-w-7xl mx-auto flex gap-8">
+        
         <div class="w-80 shrink-0 space-y-6">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                <h2 class="text-lg font-bold mb-4 text-gray-800">NVR 모델 선택</h2>
-                <select id="modelSelect" class="w-full p-2.5 border rounded-lg text-sm mb-4" onchange="initNVR()">
-                    <option value="3200,32">DR-8564 / 8564D (3200 TP)</option>
-                    <option value="1600,16">DR-8532 / 8516 (1600 TP)</option>
-                    <option value="1600,16">DR-6532 / 6516 / 6508 (1600 TP)</option>
-                    <option value="800,8">DR-2516 / 2508 (800 TP)</option>
-                    <option value="400,4">DR-2504 (400 TP)</option>
-                </select>
-                <div class="space-y-2 text-xs text-gray-500">
-                    <div class="flex justify-between"><span>Max Throughput</span><span id="maxTP">3200</span></div>
-                    <div class="flex justify-between"><span>가용 VA Engines</span><span id="maxUnits">32 Units</span></div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex items-center gap-2 mb-6 text-blue-600">
+                    <span class="text-xl">⚙️</span>
+                    <h2 class="font-bold text-gray-800 text-lg">NVR Configuration</h2>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-500 mb-2">NVR Model</label>
+                        <select id="modelSelect" class="w-full p-3 border border-gray-200 rounded-xl text-sm font-medium bg-gray-50" onchange="initNVR()">
+                            <option value="3200,32">DR-8564 / 8564D (3200 TP)</option>
+                            <option value="1600,16">DR-8532 / 8516 / 6500 (1600 TP)</option>
+                            <option value="800,8">DR-2516 / 2508 (800 TP)</option>
+                            <option value="400,4">DR-2504 (400 TP)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 gap-3 pt-2 text-sm">
+                        <div class="flex justify-between text-gray-400"><span>Max Throughput</span><span id="maxTP" class="font-bold text-gray-700">3200</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Available VA Engines</span><span id="maxUnits" class="font-bold text-blue-600">32 Units</span></div>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-[#1e293b] p-6 rounded-2xl shadow-xl text-white">
-                <h2 class="text-sm font-bold mb-6 text-gray-400 uppercase tracking-wider">시스템 부하 분석</h2>
+            <div id="statusPanel" class="bg-[#262f3f] p-6 rounded-2xl shadow-xl text-white transition-colors duration-300">
+                <div class="flex items-center gap-2 mb-6">
+                    <span id="statusIcon">✔️</span>
+                    <h2 class="font-bold text-sm uppercase tracking-wider">System Load Analysis</h2>
+                </div>
+                
                 <div class="flex justify-between items-end mb-2">
                     <span class="text-3xl font-bold"><span id="usagePercent">0</span>%</span>
-                    <span class="text-xs text-gray-400"><span id="currentTP">0</span> / <span id="targetTP">3200</span></span>
+                    <span class="text-xs opacity-70"><span id="currentTP">0</span> / <span id="targetTP">3200</span></span>
                 </div>
-                <div class="w-full bg-gray-700 h-2 rounded-full overflow-hidden mb-6">
-                    <div id="tpBar" class="progress-bar bg-green-400 h-full w-0"></div>
+                
+                <div class="w-full bg-black/20 h-2.5 rounded-full overflow-hidden mb-8">
+                    <div id="tpBar" class="progress-bar bg-[#4ade80] h-full w-0"></div>
                 </div>
-                <div class="space-y-3 text-sm border-t border-gray-700 pt-4">
-                    <div class="flex justify-between"><span>연결된 카메라</span><span id="camCount">0 대</span></div>
-                    <div class="flex justify-between"><span>사용 중인 엔진</span><span id="engineCount">0 / 32</span></div>
+                
+                <div class="space-y-4 text-sm border-t border-white/10 pt-6">
+                    <div class="flex justify-between opacity-80"><span>Connected Cameras</span><span id="camCount" class="font-bold">0</span></div>
+                    <div class="flex justify-between opacity-80"><span>Required VA Engines</span><span id="engineCount" class="font-bold">0 / 32</span></div>
                 </div>
-                <div id="statusMsg" class="mt-6 p-2 rounded text-center text-xs font-bold border border-green-500/30 text-green-400 bg-green-500/10">
-                    ✓ 현재 설정으로 운용 가능합니다.
+                
+                <div id="statusMsg" class="mt-8 text-center text-[11px] font-bold py-2 rounded-lg bg-white/10 text-green-400 border border-green-500/20">
+                    ✓ System is operational.
                 </div>
+            </div>
+
+            <div class="bg-[#f1f5f9] p-6 rounded-2xl border border-blue-100">
+                <div class="flex items-center gap-2 mb-4 text-blue-600">
+                    <span class="text-sm">ⓘ</span>
+                    <h3 class="font-bold text-sm">Notes</h3>
+                </div>
+                <ul class="text-[11px] text-blue-800 leading-relaxed space-y-2 list-disc ml-3">
+                    <li>1 VA Engine = 100 Throughput</li>
+                    <li>Combined features (e.g., Object+Face) consume 2 engines.</li>
+                    <li>NVR throughput may vary by firmware. Maintaining a resource buffer is recommended.</li>
+                </ul>
             </div>
         </div>
 
         <div class="flex-1">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">카메라 구성 <span id="camTotalText" class="text-blue-600">(0대)</span></h2>
-                <button onclick="addCamera()" class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition-all">+ 카메라 추가</button>
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 tracking-tight">Camera Configuration <span id="camTotalText" class="text-blue-600 ml-1">(0)</span></h2>
+                <button onclick="addCamera()" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition-all">+ Add Camera</button>
             </div>
+            
             <div id="cameraGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 </div>
         </div>
@@ -110,63 +143,89 @@
                 if (cam.aba) { cTP += 100; cU++; }
                 if (cam.fall) { cTP += 100; cU++; }
                 if (cam.crowd) { cTP += 100; cU++; }
-                if (cam.dv1304) { cTP += 100; cU++; } // DV-1304 엔진 추가
-
+                if (cam.dv1304) { cTP += 100; cU++; }
                 totalTP += cTP; totalUnits += cU;
 
                 grid.innerHTML += `
-                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm relative">
-                        <div class="flex justify-between items-center mb-4 pb-2 border-b">
-                            <h3 class="font-bold text-gray-700">Camera ${idx + 1}</h3>
+                    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative">
+                        <div class="flex justify-between items-center mb-6 pb-2 border-b border-gray-50">
+                            <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wider">Camera ${idx + 1}</h3>
                             <div class="flex items-center gap-2">
-                                <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">${cTP} VA</span>
-                                <button onclick="removeCamera(${cam.id})" class="text-gray-300 hover:text-red-500">✕</button>
+                                <span class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">${cTP} VA</span>
+                                <button onclick="removeCamera(${cam.id})" class="text-gray-300 hover:text-red-500 ml-2">✕</button>
                             </div>
                         </div>
                         <div class="space-y-3">
-                            <div class="p-2 rounded-lg engine-card ${cam.obj.on ? 'engine-active' : ''}">
-                                <label class="flex items-center gap-2 text-sm font-semibold cursor-pointer"><input type="checkbox" ${cam.obj.on ? 'checked' : ''} onchange="toggle(${cam.id}, 'obj')"> Object Engine</label>
-                                <div class="ml-6 mt-1 flex gap-3 text-[11px] ${!cam.obj.on ? 'opacity-20 pointer-events-none' : ''}">
-                                    <label class="cursor-pointer"><input type="checkbox" ${cam.obj.at ? 'checked' : ''} onchange="toggle(${cam.id}, 'obj', 'at')"> Attribute</label>
-                                    <label class="cursor-pointer"><input type="checkbox" ${cam.obj.me ? 'checked' : ''} onchange="toggle(${cam.id}, 'obj', 'me')"> Metadata</label>
-                                </div>
-                            </div>
-                            <div class="p-2 rounded-lg engine-card ${cam.face.on ? 'engine-active' : ''}">
-                                <label class="flex items-center gap-2 text-sm font-semibold cursor-pointer"><input type="checkbox" ${cam.face.on ? 'checked' : ''} onchange="toggle(${cam.id}, 'face')"> Face Engine</label>
-                                <div class="ml-6 mt-1 flex gap-3 text-[11px] ${!cam.face.on ? 'opacity-20 pointer-events-none' : ''}">
-                                    <label class="cursor-pointer"><input type="checkbox" ${cam.face.at ? 'checked' : ''} onchange="toggle(${cam.id}, 'face', 'at')"> Attribute</label>
-                                    <label class="cursor-pointer"><input type="checkbox" ${cam.face.me ? 'checked' : ''} onchange="toggle(${cam.id}, 'face', 'me')"> Metadata</label>
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2 text-[11px] font-bold">
-                                <div onclick="toggle(${cam.id}, 'aba')" class="p-2 border rounded-lg text-center cursor-pointer ${cam.aba ? 'bg-blue-600 text-white' : 'text-gray-400'}">Abandoned</div>
-                                <div onclick="toggle(${cam.id}, 'fall')" class="p-2 border rounded-lg text-center cursor-pointer ${cam.fall ? 'bg-blue-600 text-white' : 'text-gray-400'}">Fall Detection</div>
-                                <div onclick="toggle(${cam.id}, 'crowd')" class="p-2 border rounded-lg text-center cursor-pointer ${cam.crowd ? 'bg-blue-600 text-white' : 'text-gray-400'}">Crowd Detection</div>
-                                <div onclick="toggle(${cam.id}, 'dv1304')" class="p-2 border rounded-lg text-center cursor-pointer ${cam.dv1304 ? 'bg-orange-500 text-white border-orange-500' : 'text-orange-500 border-orange-200'}">DV-1304 (AI Box)</div>
-                            </div>
+                            ${renderEngineRow(cam.id, 'obj', 'Object Engine', cam.obj)}
+                            ${renderEngineRow(cam.id, 'face', 'Face Engine', cam.face)}
+                            ${renderSimpleEngineRow(cam.id, 'aba', 'Abandoned / Removed', cam.aba)}
+                            ${renderSimpleEngineRow(cam.id, 'fall', 'Fall Detection', cam.fall)}
+                            ${renderSimpleEngineRow(cam.id, 'crowd', 'Crowd Detection', cam.crowd)}
+                            ${renderSimpleEngineRow(cam.id, 'dv1304', 'DV-1304 (AI Box)', cam.dv1304, true)}
                         </div>
                     </div>
                 `;
             });
-            update(totalTP, totalUnits);
+            updateDashboard(totalTP, totalUnits);
         }
 
-        function update(load, units) {
-            const p = Math.min((load / maxTP) * 100, 100);
-            document.getElementById('usagePercent').innerText = Math.round(p);
+        function renderEngineRow(id, key, label, state) {
+            return `
+                <div class="p-3 rounded-2xl engine-card ${state.on ? 'engine-active' : ''}">
+                    <label class="flex items-center gap-3 text-sm font-semibold cursor-pointer">
+                        <input type="checkbox" ${state.on ? 'checked' : ''} onchange="toggle(${id}, '${key}')" class="w-4 h-4 rounded border-gray-300 text-blue-600"> ${label}
+                    </label>
+                    <div class="ml-7 mt-2 flex gap-4 text-[11px] ${!state.on ? 'opacity-20 pointer-events-none' : ''}">
+                        <label class="flex items-center gap-1.5 cursor-pointer text-gray-500"><input type="checkbox" ${state.at ? 'checked' : ''} onchange="toggle(${id}, '${key}', 'at')"> Attribute</label>
+                        <label class="flex items-center gap-1.5 cursor-pointer text-gray-500"><input type="checkbox" ${state.me ? 'checked' : ''} onchange="toggle(${id}, '${key}', 'me')"> Metadata</label>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSimpleEngineRow(id, key, label, isActive, isSpecial = false) {
+            const activeClass = isSpecial ? 'dv-active' : 'engine-active';
+            const textColor = isSpecial ? 'text-orange-600' : 'text-gray-700';
+            const checkColor = isSpecial ? 'text-orange-500' : 'text-blue-600';
+
+            return `
+                <div class="p-3 rounded-2xl engine-card ${isActive ? activeClass : ''}">
+                    <label class="flex items-center gap-3 text-sm font-semibold cursor-pointer ${textColor}">
+                        <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggle(${id}, '${key}')" class="w-4 h-4 rounded border-gray-300 ${checkColor}"> ${label}
+                    </label>
+                </div>
+            `;
+        }
+
+        function updateDashboard(load, units) {
+            const percent = Math.round((load / maxTP) * 100);
+            const isOver = load > maxTP || units > maxUnits;
+            
+            document.getElementById('usagePercent').innerText = percent;
             document.getElementById('currentTP').innerText = load;
-            document.getElementById('camCount').innerText = cameras.length + " 대";
-            document.getElementById('camTotalText').innerText = `(${cameras.length}대)`;
+            document.getElementById('camCount').innerText = cameras.length;
+            document.getElementById('camTotalText').innerText = `(${cameras.length})`;
             document.getElementById('engineCount').innerText = units + " / " + maxUnits;
-            document.getElementById('tpBar').style.width = p + "%";
-            document.getElementById('tpBar').className = `progress-bar h-full ${p > 90 ? 'bg-red-500' : 'bg-green-400'}`;
+            
+            const bar = document.getElementById('tpBar');
+            bar.style.width = Math.min(percent, 100) + "%";
+            
+            const panel = document.getElementById('statusPanel');
             const msg = document.getElementById('statusMsg');
-            if (load > maxTP || units > maxUnits) {
-                msg.innerText = "✘ 부하 초과: 설계 변경 필요";
-                msg.className = "mt-6 p-2 rounded text-center text-xs font-bold border border-red-500/30 text-red-400 bg-red-500/10";
+            const icon = document.getElementById('statusIcon');
+
+            if (isOver) {
+                panel.classList.add('bg-overload');
+                bar.classList.replace('bg-[#4ade80]', 'bg-white');
+                msg.innerText = "⚠ PERFORMANCE EXCEEDED! REDUCE LOAD.";
+                msg.className = "mt-8 text-center text-[10px] font-bold py-2 rounded-lg bg-black/20 text-white border border-white/30";
+                icon.innerText = "⚠️";
             } else {
-                msg.innerText = "✓ 현재 설정으로 운용 가능합니다.";
-                msg.className = "mt-6 p-2 rounded text-center text-xs font-bold border border-green-500/30 text-green-400 bg-green-500/10";
+                panel.classList.remove('bg-overload');
+                bar.classList.replace('bg-white', 'bg-[#4ade80]');
+                msg.innerText = "✓ System is operational.";
+                msg.className = "mt-8 text-center text-[11px] font-bold py-2 rounded-lg bg-white/10 text-green-400 border border-green-500/20";
+                icon.innerText = "✔️";
             }
         }
         initNVR();
