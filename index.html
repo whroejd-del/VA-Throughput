@@ -28,7 +28,8 @@
                         <label class="block text-sm text-gray-500 mb-2">NVR Model</label>
                         <select id="modelSelect" class="w-full p-3 border border-gray-200 rounded-xl text-sm font-medium bg-gray-50" onchange="initNVR()">
                             <option value="3200,32">DR-8564 / 8564D (3200 TP)</option>
-                            <option value="1600,16">DR-8532 / 8516 / 6500 (1600 TP)</option>
+                            <option value="1600,16">DR-8532 / 8532D / 8516 (1600 TP)</option>
+                            <option value="1600,16">DR-6532 / 6516 / 6508 (1600 TP)</option>
                             <option value="800,8">DR-2516 / 2508 (800 TP)</option>
                             <option value="400,4">DR-2504 (400 TP)</option>
                         </select>
@@ -66,14 +67,15 @@
                 </div>
             </div>
 
-            <div class="bg-[#f1f5f9] p-6 rounded-2xl border border-blue-100">
-                <div class="flex items-center gap-2 mb-4 text-blue-600">
+            <div class="bg-[#f1f5f9] p-6 rounded-2xl border border-blue-100 text-blue-800">
+                <div class="flex items-center gap-2 mb-4">
                     <span class="text-sm">ⓘ</span>
                     <h3 class="font-bold text-sm">Notes</h3>
                 </div>
-                <ul class="text-[11px] text-blue-800 leading-relaxed space-y-2 list-disc ml-3">
+                <ul class="text-[11px] leading-relaxed space-y-2 list-disc ml-3">
                     <li>1 VA Engine = 100 Throughput</li>
-                    <li>Combined features (e.g., Object+Face) consume 2 engines.</li>
+                    <li>Each analytic feature (Object, Face, etc.) consumes 1 VA engine unit.</li>
+                    <li>Combined features consume multiple engine units accordingly.</li>
                     <li>NVR throughput may vary by firmware. Maintaining a resource buffer is recommended.</li>
                 </ul>
             </div>
