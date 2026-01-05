@@ -9,7 +9,6 @@
         .progress-bar { transition: width 0.3s ease, background-color 0.3s ease; }
         .engine-card { border-left: 4px solid #f1f5f9; transition: all 0.2s; }
         .engine-active { border-left-color: #3b82f6; background-color: #eff6ff; }
-        .dv-active { border-left-color: #f97316; background-color: #fff7ed; }
         .bg-overload { background-color: #dc2626 !important; }
     </style>
 </head>
@@ -28,8 +27,7 @@
                             <option value="3200,32">DR-8564 / 8564D (3200 TP)</option>
                             <option value="1600,16">DR-8532 / 8532D / 8516 (1600 TP)</option>
                             <option value="1600,16">DR-6532 / 6516 / 6508 (1600 TP)</option>
-                            <option value="800,8">DR-3516 / 2516 / 2508 (800 TP)</option>
-                            <option value="400,4">DR-2504 (400 TP)</option>
+                            <option value="800,8">DR-3516 / 2516 / 2508 / 2504 (800 TP)</option>
                         </select>
                     </div>
                     <div class="grid grid-cols-1 gap-3 pt-2 text-sm">
@@ -61,7 +59,7 @@
                     <li>1 VA Engine = 100 Throughput</li>
                     <li>Metadata is required for Attributes, but costs 0 TP.</li>
                     <li>Attributes cost 100 TP.</li>
-                    <li class="font-bold text-orange-700">DV-1304 (AI Box) does not consume NVR's VA resources (TP/Engine).</li>
+                    <li class="font-bold text-blue-700">BI Engine (DV-1304) does not consume NVR's VA resources (TP/Engine).</li>
                 </ul>
             </div>
         </div>
@@ -132,8 +130,6 @@
                 if (cam.fall) { cTP += 100; cU++; }
                 if (cam.crowd) { cTP += 100; cU++; }
                 
-                // DV-1304는 계산 로직에서 완전히 제외 (0 TP, 0 Units)
-                
                 totalTP += cTP; totalUnits += cU;
 
                 grid.innerHTML += `
@@ -191,11 +187,12 @@
 
         function renderSpecialEngineRow(id, key, label, isActive) {
             return `
-                <div class="p-3 rounded-2xl engine-card ${isActive ? 'dv-active' : ''}">
-                    <label class="flex items-center gap-3 text-sm font-semibold cursor-pointer text-orange-600">
-                        <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggle(${id}, '${key}')" class="w-4 h-4 rounded border-gray-300 text-orange-500"> ${label}
+                <div class="p-3 rounded-2xl engine-card ${isActive ? 'engine-active' : ''}">
+                    <label class="flex items-center gap-3 text-sm font-semibold cursor-pointer text-gray-700">
+                        <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggle(${id}, '${key}')" class="w-4 h-4 rounded border-gray-300 text-blue-600"> 
+                        ${label} <span class="text-[10px] text-blue-500 ml-1 font-normal opacity-70">(AI Box - 0 TP)</span>
                     </label>
-                    ${isActive ? `<p class="ml-7 mt-1 text-[10px] text-orange-400 font-medium">* BI Engine does not consume NVR resources (TP/Engine).</p>` : ''}
+                    ${isActive ? `<p class="ml-7 mt-1 text-[10px] text-blue-400 font-medium">* BI Engine does not consume NVR resources (TP/Engine).</p>` : ''}
                 </div>
             `;
         }
