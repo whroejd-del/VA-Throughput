@@ -55,11 +55,12 @@
 
             <div class="bg-[#f1f5f9] p-6 rounded-2xl border border-blue-100 text-blue-800">
                 <div class="flex items-center gap-2 mb-4 font-bold text-sm">ⓘ Notes</div>
-                <ul class="text-[11px] leading-relaxed space-y-2 list-disc ml-3">
+                <ul class="text-[11px] leading-relaxed space-y-2 list-disc ml-4 font-normal">
                     <li>1 VA Engine = 100 Throughput</li>
                     <li>Metadata is required for Attributes, but costs 0 TP.</li>
                     <li>Attributes cost 100 TP.</li>
-                    <li class="font-bold text-blue-700">BI Engine (DV-1304) does not consume NVR's VA resources (TP/Engine).</li>
+                    <li>DV-1304-A (AI Box) does not consume NVR's VA resources (TP/Engine).</li>
+                    <li>DV-1304-A only supports Object and Face engines (Metadata/Attribute not supported).</li>
                 </ul>
             </div>
         </div>
@@ -147,7 +148,7 @@
                             ${renderSimpleEngineRow(cam.id, 'aba', 'Abandoned / Removed', cam.aba)}
                             ${renderSimpleEngineRow(cam.id, 'fall', 'Fall Detection', cam.fall)}
                             ${renderSimpleEngineRow(cam.id, 'crowd', 'Crowd Detection', cam.crowd)}
-                            ${renderSpecialEngineRow(cam.id, 'dv1304', 'DV-1304 (AI Box)', cam.dv1304)}
+                            ${renderSpecialEngineRow(cam.id, 'dv1304', 'DV-1304-A (AI Box)', cam.dv1304)}
                         </div>
                     </div>
                 `;
@@ -190,9 +191,9 @@
                 <div class="p-3 rounded-2xl engine-card ${isActive ? 'engine-active' : ''}">
                     <label class="flex items-center gap-3 text-sm font-semibold cursor-pointer text-gray-700">
                         <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggle(${id}, '${key}')" class="w-4 h-4 rounded border-gray-300 text-blue-600"> 
-                        ${label} <span class="text-[10px] text-blue-500 ml-1 font-normal opacity-70">(AI Box - 0 TP)</span>
+                        ${label} <span class="text-[10px] text-blue-500 ml-1 font-normal opacity-70">(0 TP)</span>
                     </label>
-                    ${isActive ? `<p class="ml-7 mt-1 text-[10px] text-blue-400 font-medium">* BI Engine does not consume NVR resources (TP/Engine).</p>` : ''}
+                    ${isActive ? `<p class="ml-7 mt-1 text-[10px] text-blue-400 font-normal">* Does not consume NVR resources (TP/Engine).</p>` : ''}
                 </div>
             `;
         }
