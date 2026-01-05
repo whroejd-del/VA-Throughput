@@ -28,7 +28,7 @@
                             <option value="3200,32">DR-8564 / 8564D (3200 TP)</option>
                             <option value="1600,16">DR-8532 / 8532D / 8516 (1600 TP)</option>
                             <option value="1600,16">DR-6532 / 6516 / 6508 (1600 TP)</option>
-                            <option value="800,8">DR-2516 / 2508 (800 TP)</option>
+                            <option value="800,8">DR-3516 / 2516 / 2508 (800 TP)</option>
                             <option value="400,4">DR-2504 (400 TP)</option>
                         </select>
                     </div>
@@ -61,7 +61,7 @@
                     <li>1 VA Engine = 100 Throughput</li>
                     <li>Metadata is required for Attributes, but costs 0 TP.</li>
                     <li>Attributes cost 100 TP.</li>
-                    <li>NVR throughput may vary by firmware. Maintaining a resource buffer is recommended.</li>
+                    <li class="font-bold text-orange-700">DV-1304 (AI Box) does not consume NVR's VA resources (TP/Engine).</li>
                 </ul>
             </div>
         </div>
@@ -131,7 +131,9 @@
                 if (cam.aba) { cTP += 100; cU++; }
                 if (cam.fall) { cTP += 100; cU++; }
                 if (cam.crowd) { cTP += 100; cU++; }
-                if (cam.dv1304) { cTP += 100; cU++; }
+                
+                // DV-1304는 계산 로직에서 완전히 제외 (0 TP, 0 Units)
+                
                 totalTP += cTP; totalUnits += cU;
 
                 grid.innerHTML += `
@@ -149,7 +151,7 @@
                             ${renderSimpleEngineRow(cam.id, 'aba', 'Abandoned / Removed', cam.aba)}
                             ${renderSimpleEngineRow(cam.id, 'fall', 'Fall Detection', cam.fall)}
                             ${renderSimpleEngineRow(cam.id, 'crowd', 'Crowd Detection', cam.crowd)}
-                            ${renderSimpleEngineRow(cam.id, 'dv1304', 'DV-1304 (AI Box)', cam.dv1304, true)}
+                            ${renderSpecialEngineRow(cam.id, 'dv1304', 'DV-1304 (AI Box)', cam.dv1304)}
                         </div>
                     </div>
                 `;
@@ -177,12 +179,23 @@
             `;
         }
 
-        function renderSimpleEngineRow(id, key, label, isActive, isSpecial = false) {
+        function renderSimpleEngineRow(id, key, label, isActive) {
             return `
-                <div class="p-3 rounded-2xl engine-card ${isActive ? (isSpecial ? 'dv-active' : 'engine-active') : ''}">
-                    <label class="flex items-center gap-3 text-sm font-semibold cursor-pointer ${isSpecial ? 'text-orange-600' : ''}">
-                        <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggle(${id}, '${key}')" class="w-4 h-4 rounded border-gray-300 ${isSpecial ? 'text-orange-500' : 'text-blue-600'}"> ${label}
+                <div class="p-3 rounded-2xl engine-card ${isActive ? 'engine-active' : ''}">
+                    <label class="flex items-center gap-3 text-sm font-semibold cursor-pointer">
+                        <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggle(${id}, '${key}')" class="w-4 h-4 rounded border-gray-300 text-blue-600"> ${label}
                     </label>
+                </div>
+            `;
+        }
+
+        function renderSpecialEngineRow(id, key, label, isActive) {
+            return `
+                <div class="p-3 rounded-2xl engine-card ${isActive ? 'dv-active' : ''}">
+                    <label class="flex items-center gap-3 text-sm font-semibold cursor-pointer text-orange-600">
+                        <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggle(${id}, '${key}')" class="w-4 h-4 rounded border-gray-300 text-orange-500"> ${label}
+                    </label>
+                    ${isActive ? `<p class="ml-7 mt-1 text-[10px] text-orange-400 font-medium">* BI Engine does not consume NVR resources (TP/Engine).</p>` : ''}
                 </div>
             `;
         }
