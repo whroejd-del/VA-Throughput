@@ -59,7 +59,7 @@
                     <li>1 VA Engine = 100 Throughput</li>
                     <li>Metadata is required for Attributes, but costs 0 TP.</li>
                     <li>Attributes cost 100 TP.</li>
-                    <li>DV-1304-A (AI Box) does not consume NVR's VA resources (TP/Engine).</li>
+                    <li>DV-1304 (BI Engine) does not consume NVR's VA resources (TP/Engine).</li>
                     <li>DV-1304-A only supports Object and Face engine (Metadata/Attribute not supported).</li>
                     <li>Object Engine includes Object Detection, Line Crossing, Loitering, and Intrusion.</li>
                 </ul>
@@ -149,7 +149,7 @@
                             ${renderSimpleEngineRow(cam.id, 'aba', 'Abandoned / Removed', cam.aba)}
                             ${renderSimpleEngineRow(cam.id, 'fall', 'Fall Detection', cam.fall)}
                             ${renderSimpleEngineRow(cam.id, 'crowd', 'Crowd Detection', cam.crowd)}
-                            ${renderSpecialEngineRow(cam.id, 'dv1304', 'DV-1304-A (AI Box)', cam.dv1304)}
+                            ${renderSpecialEngineRow(cam.id, 'dv1304', 'DV-1304 (AI Box)', cam.dv1304)}
                         </div>
                     </div>
                 `;
